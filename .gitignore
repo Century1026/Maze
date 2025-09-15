@@ -1,0 +1,9 @@
+# Ignore everything
+/*
+
+# But not these folders
+!/Scripts/
+!/Scripts/**
+
+# Keep the .gitignore file itself
+!.gitignore
