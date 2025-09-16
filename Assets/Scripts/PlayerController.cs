@@ -34,6 +34,12 @@ public class PlayerController : MonoBehaviour
         isTimerRunning = true;
     }
 
+    public void AddPoint()
+    {
+        count++;
+        SetCountText();
+    }
+
     private void FixedUpdate()
     {
         Vector3 movement = new Vector3(movementX, 0.0f, movementY);
@@ -55,8 +61,7 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.CompareTag("PickUp"))
         {
             other.gameObject.SetActive(false);
-            count = count + 1;
-            SetCountText();
+            AddPoint();
         }
     }
 
