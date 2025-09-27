@@ -6,14 +6,14 @@ public class Collectible : MonoBehaviour
     public float collectDistance = .5f;   
     private Transform player;
     private PlayerController playerController;
-    private AudioSource audioSource;
+    public AudioSource collectSound;
+    public AudioSource approachingSound;
     private ParticleSystem part;
 
     [System.Obsolete]
     void Start()
     {
         player = GameObject.FindWithTag("Player").transform;
-        audioSource = GetComponent<AudioSource>();
         playerController = FindObjectOfType<PlayerController>();
         part = GetComponent<ParticleSystem>();
     }
@@ -23,6 +23,8 @@ public class Collectible : MonoBehaviour
         if (Vector3.Distance(player.position, transform.position) <= collectDistance)
         {
             part.Play();
+            if (!approachingSound.isPlaying)
+                approachingSound.Play();
             // Mouse click (desktop)
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
             {
@@ -38,6 +40,8 @@ public class Collectible : MonoBehaviour
         else
         {
             part.Stop();
+            if (approachingSound.isPlaying)
+                approachingSound.Stop();
         }
     }
 
@@ -48,7 +52,7 @@ public class Collectible : MonoBehaviour
         {
             if (hit.transform == transform)
             {
-                AudioSource.PlayClipAtPoint(audioSource.clip, transform.position);
+                AudioSource.PlayClipAtPoint(collectSound.clip, transform.position);
                 gameObject.SetActive(false); // collected
                 playerController.AddPoint();
             }
