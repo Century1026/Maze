@@ -5,7 +5,6 @@
 /// </summary>
 public static class LevelProgress
 {
-    [Header("Progress State")]
     private static int unlockedLevel = 1; // The highest level that has been unlocked (starts at 1)
 
     /// <summary>
