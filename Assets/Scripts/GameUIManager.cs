@@ -56,6 +56,10 @@ public class GameUIManager : MonoBehaviour
         isTimerRunning = false;
         victoryCountText.text = countText.text;
         victoryTimerText.text = timerText.text;
+
+        int currentIndex = SceneManager.GetActiveScene().buildIndex;
+        LevelProgress.UnlockLevel(currentIndex + 1);
+
         Status.SetActive(false);
         pageManager.NextPage();
     }
