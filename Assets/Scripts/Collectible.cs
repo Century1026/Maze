@@ -54,7 +54,7 @@ public class Collectible : MonoBehaviour
             {
                 AudioSource.PlayClipAtPoint(collectSound.clip, transform.position);
                 gameObject.SetActive(false); // collected
-                playerController.AddPoint();
+                GameUIManager.Instance.AddPoint();
             }
         }
     }

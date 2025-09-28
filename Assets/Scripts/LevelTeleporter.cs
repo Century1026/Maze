@@ -4,10 +4,22 @@ using System.Collections;
 
 public class LevelTeleporter : MonoBehaviour
 {
-    public void switchScene()
+    public void nextScene()
     {
         int currentScene = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(currentScene + 1);
+    }
+
+    public void ShowScene(int sceneIndex)
+    {
+        if (sceneIndex >= 0 && sceneIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            SceneManager.LoadScene(sceneIndex);
+        }
+        else
+        {
+            Debug.LogWarning("Invalid scene index: " + sceneIndex);
+        }
     }
     // public AudioSource endZoneSound;
     // public PageManager pageManager;

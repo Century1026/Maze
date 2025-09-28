@@ -7,17 +7,10 @@ using System;
 public class PlayerController : MonoBehaviour
 {
     private Rigidbody rb;
-    public TextMeshProUGUI countText;
-    public TextMeshProUGUI timerText;
-    public TextMeshProUGUI victoryCountText;
-    public TextMeshProUGUI victoryTimerText;
     public AudioSource rollingAudio;
     public AudioSource jumpAudio;
     public AudioSource impactAudio;
     public AudioSource endZoneSound;
-    public PageManager pageManager;
-    public Transform startPoint;
-    private int count;
     private float movementX;
     private float movementY;
 
@@ -26,25 +19,12 @@ public class PlayerController : MonoBehaviour
     public float jumpForce = 2f;   // tune this value
     private bool isGrounded;       // check if ball is on floor
 
-    private float startTime;
-    private bool isTimerRunning = true;
-
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        count = 0;
-        SetCountText();
-
-        startTime = Time.time;
-        isTimerRunning = true;
-    }
-
-    public void AddPoint()
-    {
-        count++;
-        SetCountText();
+        GameUIManager.Instance.ResetGame();
     }
 
     private void FixedUpdate()
@@ -56,11 +36,6 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // Update timer each frame
-        if (isTimerRunning)
-        {
-            float t = Time.time - startTime;
-            timerText.text = "Time: " + t.ToString("F2"); // 2 decimal places
-        }
 
         if (transform.position.y < -2f) // adjust threshold to match hole depth
         {
@@ -89,16 +64,14 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.CompareTag("PickUp"))
         {
             other.gameObject.SetActive(false);
-            AddPoint();
+            GameUIManager.Instance.AddPoint();
         }
 
         if (other.CompareTag("EndZone"))
         {
             // StartCoroutine(PlayAndLoad());
             AudioSource.PlayClipAtPoint(endZoneSound.clip, transform.position);
-            victoryCountText.text = countText.text;
-            victoryTimerText.text = timerText.text;
-            pageManager.NextPage();
+            GameUIManager.Instance.ShowVictory();
         }
     }
 
@@ -120,33 +93,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnRestart()
     {
-        // Reload the currently active scene
-        PageManager.pageToLoad = 2;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-    // {
-    //     // reset player position & physics
-    //     rb.linearVelocity = Vector3.zero;
-    //     rb.angularVelocity = Vector3.zero;
-    //     transform.position = startPoint.position;
-    //     transform.rotation = Quaternion.identity;
-
-    //     // reset timer & counter
-    //     startTime = Time.time;
-    //     isTimerRunning = true;
-    //     count = 0;
-    //     SetCountText();
-
-    //     // optionally reset collectibles
-    //     foreach (GameObject pickup in GameObject.FindGameObjectsWithTag("PickUp"))
-    //     {
-    //         pickup.SetActive(true);
-    //     }
-    // }
-
-    void SetCountText()
-    {
-        countText.text = "Point: " + count.ToString();
     }
 
     private void OnCollisionEnter(Collision collision)
