@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     [Header("Physics References")]
     private Rigidbody rb; // Reference to the player's Rigidbody component
     
+
     [Header("Audio Sources")]
     [Tooltip("Audio source for rolling sound effects")]
     public AudioSource rollingAudio;
@@ -27,16 +28,27 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Audio source for end zone completion sound")]
     public AudioSource endZoneSound;
     
+
     [Header("Movement Variables")]
     private float movementX; // Horizontal movement input
     private float movementY; // Vertical movement input (forward/backward)
     
+
     [Header("Movement Settings")]
     [Tooltip("Force applied to the player for movement")]
     public float speed = 0;
     
     [Tooltip("Force applied when jumping")]
     public float jumpForce = 2f;   
+
+
+    [Header("Tilt Settings")]
+    [Tooltip("Scales how strong the tilt input feels")]
+    public float tiltSensitivity = 10f;
+
+    [Tooltip("Ignore tiny accidental tilts below this threshold")]
+    public float tiltDeadzone = 0.05f;
+
     
     [Header("Player State")]
     private bool isGrounded; // Whether the player is currently touching the ground
@@ -128,6 +140,27 @@ public class PlayerController : MonoBehaviour
         Vector2 movementVector = movementValue.Get<Vector2>();
         movementX = movementVector.x;
         movementY = movementVector.y;
+    }
+
+    private void OnTilt(InputValue value)
+    {
+        Vector3 g = value.Get<Vector3>();
+
+        // Debug to check values
+        Debug.Log($"Tilt raw: {g}");
+
+        g.Normalize();
+
+        float alongRight   = g.x;   // phone left/right tilt
+        float alongForward = -g.y;  // phone forward/back tilt
+
+        // Apply deadzone
+        if (Mathf.Abs(alongRight) < tiltDeadzone) alongRight = 0f;
+        if (Mathf.Abs(alongForward) < tiltDeadzone) alongForward = 0f;
+
+        // Scale by sensitivity
+        movementX = alongRight * tiltSensitivity;
+        movementY = alongForward * tiltSensitivity;
     }
 
     /// <summary>
