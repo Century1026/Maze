@@ -53,6 +53,8 @@ public class PlayerController : MonoBehaviour
     [Header("Player State")]
     private bool isGrounded; // Whether the player is currently touching the ground
 
+    private bool tiltAvailable;
+
     /// <summary>
     /// Initialize the player controller by getting the Rigidbody component
     /// and resetting the game state
@@ -61,6 +63,16 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         GameUIManager.Instance.ResetGame();
+
+    #if UNITY_EDITOR
+        // In Editor, tilt only available if Unity Remote is streaming accel
+        tiltAvailable = SystemInfo.supportsAccelerometer;
+    #else
+        // On device: check if AttitudeSensor exists
+        tiltAvailable = AttitudeSensor.current != null;
+        if (tiltAvailable && !AttitudeSensor.current.enabled)
+            InputSystem.EnableDevice(AttitudeSensor.current);
+    #endif
     }
 
     /// <summary>
@@ -96,7 +108,7 @@ public class PlayerController : MonoBehaviour
                 rollingAudio.Play();
 
             // Adjust volume and pitch based on movement speed for dynamic audio
-            rollingAudio.volume = Mathf.Clamp01(currentSpeed / 10f); 
+            rollingAudio.volume = Mathf.Clamp01(currentSpeed / 10f);
             rollingAudio.pitch = 1f + (currentSpeed / 20f);
         }
         else
@@ -105,7 +117,41 @@ public class PlayerController : MonoBehaviour
             if (rollingAudio.isPlaying)
                 rollingAudio.Stop();
         }
-    }
+
+    if (true)
+    // if (tiltAvailable)
+    {
+    #if UNITY_EDITOR
+            // Unity Remote streams acceleration
+            Vector3 accel = Input.acceleration.normalized;
+
+            float tiltForward = accel.x;  // forward/back
+            float tiltRight   = accel.y;  // left/right
+
+    #else
+            if (AttitudeSensor.current != null)
+            {
+                Quaternion q = AttitudeSensor.current.attitude.ReadValue();
+                Vector3 down = q * Vector3.down;
+
+                float tiltForward = down.z;
+                float tiltRight   = down.x;
+    #endif
+
+            // Deadzone
+            if (Mathf.Abs(tiltForward) < tiltDeadzone) tiltForward = 0f;
+            if (Mathf.Abs(tiltRight) < tiltDeadzone)   tiltRight   = 0f;
+
+            // Apply sensitivity
+            movementX = tiltRight   * tiltSensitivity;
+            movementY = tiltForward * tiltSensitivity;
+        }
+        else
+        {
+            // no tilt → fallback handled by OnMove (keyboard/gamepad)
+            // do nothing here, movementX/Y updated by OnMove
+        }
+}
 
     /// <summary>
     /// Handle trigger collisions for collectibles and end zone
@@ -142,26 +188,26 @@ public class PlayerController : MonoBehaviour
         movementY = movementVector.y;
     }
 
-    private void OnTilt(InputValue value)
-    {
-        Vector3 g = value.Get<Vector3>();
+    // private void OnTilt(InputValue value)
+    // {
+    //     Vector3 g = value.Get<Vector3>();
 
-        // Debug to check values
-        Debug.Log($"Tilt raw: {g}");
+    //     // Debug to check values
+    //     Debug.Log($"Tilt raw: {g}");
 
-        g.Normalize();
+    //     g.Normalize();
 
-        float alongRight   = g.x;   // phone left/right tilt
-        float alongForward = -g.y;  // phone forward/back tilt
+    //     float alongRight   = g.x;   // phone left/right tilt
+    //     float alongForward = -g.y;  // phone forward/back tilt
 
-        // Apply deadzone
-        if (Mathf.Abs(alongRight) < tiltDeadzone) alongRight = 0f;
-        if (Mathf.Abs(alongForward) < tiltDeadzone) alongForward = 0f;
+    //     // Apply deadzone
+    //     if (Mathf.Abs(alongRight) < tiltDeadzone) alongRight = 0f;
+    //     if (Mathf.Abs(alongForward) < tiltDeadzone) alongForward = 0f;
 
-        // Scale by sensitivity
-        movementX = alongRight * tiltSensitivity;
-        movementY = alongForward * tiltSensitivity;
-    }
+    //     // Scale by sensitivity
+    //     movementX = alongRight * tiltSensitivity;
+    //     movementY = alongForward * tiltSensitivity;
+    // }
 
     /// <summary>
     /// Handle jump input - applies upward force if player is grounded
