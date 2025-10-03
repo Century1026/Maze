@@ -3,8 +3,7 @@ using UnityEngine.InputSystem;  // Unity's new Input System
 
 /// <summary>
 /// Collectible - An interactive collectible item that can be picked up by the player.
-/// Features proximity detection, particle effects, audio feedback, and cross-platform
-/// input support (mouse for desktop, touch for mobile).
+/// Features proximity detection, particle effects, audio feedback, and mobile touch input.
 /// </summary>
 public class Collectible : MonoBehaviour
 {
@@ -24,43 +23,28 @@ public class Collectible : MonoBehaviour
     private PlayerController playerController;   // Reference to player controller
     private ParticleSystem part;                 // Reference to particle system for visual effects
 
-    /// <summary>
-    /// Initialize collectible by finding player references and getting particle system
-    /// Note: Uses deprecated FindWithTag method - consider using a more modern approach
-    /// </summary>
-    [System.Obsolete]
     void Start()
     {
-        // Find player using tag (deprecated method - consider using singleton or direct reference)
         player = GameObject.FindWithTag("Player").transform;
-        playerController = FindObjectOfType<PlayerController>();
+        playerController = FindFirstObjectByType<PlayerController>();
         part = GetComponent<ParticleSystem>();
     }
 
-    /// <summary>
-    /// Update collectible state every frame - handles proximity detection,
-    /// particle effects, audio feedback, and input processing
-    /// </summary>
     void Update()
     {
         // Check if player is within collection distance
         if (Vector3.Distance(player.position, transform.position) <= collectDistance)
         {
             // Play particle effects when player is near
-            part.Play();
+            if (!part.isPlaying) part.Play();
             
             // Play approaching sound if not already playing
             if (!approachingSound.isPlaying)
                 approachingSound.Play();
                 
-            // Handle mouse input (desktop)
-            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                TryCollect();
-            }
-
-            // Handle touch input (mobile)
-            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.tapCount.ReadValue() > 0)
+            // Handle touch input (mobile only)
+            if (Touchscreen.current != null && 
+                Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
             {
                 TryCollect();
             }
@@ -68,26 +52,17 @@ public class Collectible : MonoBehaviour
         else
         {
             // Stop effects when player moves away
-            part.Stop();
-            if (approachingSound.isPlaying)
-                approachingSound.Stop();
+            if (part.isPlaying) part.Stop();
+            if (approachingSound.isPlaying) approachingSound.Stop();
         }
     }
 
-    /// <summary>
-    /// Attempt to collect the item by casting a ray from input position
-    /// to verify the player is actually clicking/tapping on this collectible
-    /// </summary>
     void TryCollect()
     {
-        // Create ray from camera through input position (mouse or touch)
-        Vector2 inputPosition = Mouse.current != null ? 
-            Mouse.current.position.ReadValue() : 
-            Touchscreen.current.primaryTouch.position.ReadValue();
-            
+        // Use touch position
+        Vector2 inputPosition = Touchscreen.current.primaryTouch.position.ReadValue();
         Ray ray = Camera.main.ScreenPointToRay(inputPosition);
-        
-        // Cast ray to check if it hits this collectible
+
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             if (hit.transform == transform)

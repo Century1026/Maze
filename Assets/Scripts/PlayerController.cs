@@ -44,7 +44,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Tilt Settings")]
     [Tooltip("Scales how strong the tilt input feels")]
-    public float tiltSensitivity = 10f;
+    public float tiltSensitivity = 1f;
 
     [Tooltip("Ignore tiny accidental tilts below this threshold")]
     public float tiltDeadzone = 0.05f;
@@ -123,6 +123,18 @@ public class PlayerController : MonoBehaviour
         // Deadzone
         if (Mathf.Abs(tiltForward) < tiltDeadzone) tiltForward = 0f;
         if (Mathf.Abs(tiltRight) < tiltDeadzone)   tiltRight   = 0f;
+        
+        // --- Clamp to max tilt (30°) ---
+        float maxTilt = 30f; // degrees
+        float maxVal = Mathf.Sin(maxTilt * Mathf.Deg2Rad); 
+        // maxVal ≈ 0.5, since sin(30°) = 0.5
+
+        tiltForward = Mathf.Clamp(tiltForward, -maxVal, maxVal);
+        tiltRight   = Mathf.Clamp(tiltRight, -maxVal, maxVal);
+
+        // Normalize to [-1, 1] range by dividing by maxVal
+        tiltForward /= maxVal;
+        tiltRight   /= maxVal;
 
         // Apply sensitivity
         movementX = tiltRight   * tiltSensitivity;
