@@ -44,7 +44,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Tilt Settings")]
     [Tooltip("Scales how strong the tilt input feels")]
-    public float tiltSensitivity = 1f;
+    public float tiltSensitivity = 10f;
 
     [Tooltip("Ignore tiny accidental tilts below this threshold")]
     public float tiltDeadzone = 0.05f;
@@ -83,6 +83,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        Vector3 accel = Input.acceleration.normalized;
         // Check if player has fallen below the level (fell into a hole)
         if (transform.position.y < -2f) // Adjust threshold to match hole depth
         {
@@ -108,33 +109,12 @@ public class PlayerController : MonoBehaviour
                 rollingAudio.Stop();
         }
 
-#if UNITY_EDITOR
-        Vector3 accel = Input.acceleration.normalized;
-        float tiltForward = accel.y;  // forward/back
-        float tiltRight   = accel.x;  // left/right
-#else
-        Quaternion q = AttitudeSensor.current.attitude.ReadValue();
-        Vector3 down = q * Vector3.down;
-
-        float tiltForward = down.z;
-        float tiltRight   = down.y;
-#endif
+        float tiltForward = accel.y;   // forward/backward tilt
+        float tiltRight   = accel.x;   // left/right tilt
 
         // Deadzone
         if (Mathf.Abs(tiltForward) < tiltDeadzone) tiltForward = 0f;
-        if (Mathf.Abs(tiltRight) < tiltDeadzone)   tiltRight   = 0f;
-        
-        // --- Clamp to max tilt (30°) ---
-        float maxTilt = 30f; // degrees
-        float maxVal = Mathf.Sin(maxTilt * Mathf.Deg2Rad); 
-        // maxVal ≈ 0.5, since sin(30°) = 0.5
-
-        tiltForward = Mathf.Clamp(tiltForward, -maxVal, maxVal);
-        tiltRight   = Mathf.Clamp(tiltRight, -maxVal, maxVal);
-
-        // Normalize to [-1, 1] range by dividing by maxVal
-        tiltForward /= maxVal;
-        tiltRight   /= maxVal;
+        if (Mathf.Abs(tiltRight)   < tiltDeadzone) tiltRight   = 0f;
 
         // Apply sensitivity
         movementX = tiltRight   * tiltSensitivity;
